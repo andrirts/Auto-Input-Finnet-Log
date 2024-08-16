@@ -8,6 +8,12 @@ const moment = require('moment');
 const credentialsPath = path.join(__dirname, 'credentials.json');
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
+const logMessage = `Script ran at ${moment().format()}\n`;
+
+fs.appendFile(path.join(__dirname, 'FinnetAutoInput.log'), logMessage, (err) => {
+    if (err) throw err;
+});
+
 async function authorize() {
     const auth = new google.auth.GoogleAuth({
         keyFile: credentialsPath,
