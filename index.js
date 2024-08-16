@@ -64,11 +64,17 @@ async function getDataFromDatabase() {
             }
             let resultCode = jsonData != null ? `resultCode:${jsonData.resultCode}` : 'NULL';
             const status = !jsonData ? 'Failed' : jsonData.resultCode === '68' ? 'Suspect' : jsonData.resultCode !== '00' ? 'Failed' : 'Success';
+            const mappingProductCode = {
+                'TSELFLASH1': '500 Mb',
+                'TSELFLASH2': '1 Gb',
+                'TSELFLASH3': '2 Gb',
+            }
+            const product = mappingProductCode[data.product_code] || 'Unknown';
             insertedDatas.push({
                 'Tanggal': moment(data.request_date).format('D-MMM-YY'),
                 'Response': resultCode,
                 'Mitra': data.mitra_id,
-                'Produk': data.product_code,
+                'Produk': product,
                 'Keterangan': information,
                 'Status': status,
             });
@@ -85,6 +91,10 @@ async function insertLastRow() {
     const auth = await authorize();
     const spreadsheetId = '1qGdx4JyASfRu1HMk7DcUeW9xBmVd960sSoX5FivE2dw';
     const datas = await getDataFromDatabase();
+    if (datas.length === 0) {
+        console.log("NO DATA FOUND")
+        process.exit(0);
+    }
     const values = datas.map(row => [
         row.Tanggal,
         row.Response,
