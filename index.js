@@ -2,7 +2,7 @@ const { google } = require('googleapis')
 const sheets = google.sheets('v4');
 const fs = require('fs');
 const path = require('path');
-const client = require('./dbmysql');
+const client = require('./db');
 const moment = require('moment');
 const cron = require('node-cron');
 
