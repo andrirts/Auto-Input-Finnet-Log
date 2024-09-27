@@ -2,8 +2,9 @@ const { google } = require('googleapis')
 const sheets = google.sheets('v4');
 const fs = require('fs');
 const path = require('path');
-const client = require('./db');
+const client = require('./dbmysql');
 const moment = require('moment');
+const cron = require('node-cron');
 
 const credentialsPath = path.join(__dirname, 'credentials.json');
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
@@ -22,74 +23,92 @@ async function authorize() {
     return await auth.getClient();
 }
 
-async function writeData() {
-    const auth = await authorize();
-    const spreadsheetId = '1PL7nUFmBjaFd_wx5E868Dpm1dUOATsSgWk5tfCMvtHc';
-    const range = 'Sheet1!A1';
-    const valueInputOption = 'RAW';
-    const resource = {
-        values: [
-            ['Hello', 'World'],
-            ['Foo', 'Bar']
-        ],
-    };
+// async function writeData() {
+//     const auth = await authorize();
+//     const spreadsheetId = '1PL7nUFmBjaFd_wx5E868Dpm1dUOATsSgWk5tfCMvtHc';
+//     const range = 'Sheet1!A1';
+//     const valueInputOption = 'RAW';
+//     const resource = {
+//         values: [
+//             ['Hello', 'World'],
+//             ['Foo', 'Bar']
+//         ],
+//     };
 
-    try {
-        const response = await sheets.spreadsheets.values.update({
-            spreadsheetId,
-            range,
-            valueInputOption,
-            resource,
-            auth,
-        });
+//     try {
+//         const response = await sheets.spreadsheets.values.update({
+//             spreadsheetId,
+//             range,
+//             valueInputOption,
+//             resource,
+//             auth,
+//         });
 
-        console.log('Cells updated:', response.data.updatedCells);
-    } catch (err) {
-        console.error('The API returned an error: ' + err);
-    }
-}
+//         console.log('Cells updated:', response.data.updatedCells);
+//     } catch (err) {
+//         console.error('The API returned an error: ' + err);
+//     }
+// }
 
 async function getDataFromDatabase() {
-    const db = client;
+    const db = await client();
     try {
         console.log('starting query');
         // const res = await db.query('SELECT * FROM adapter_log limit 10');
-        const query = 'select request_date,response,mitra_id,product_code,status from adapter_log where request_date between $1 and $2 order by request_date asc';
-        const values = [moment().subtract(1, 'days').format('YYYY-MM-DD'), moment().format('YYYY-MM-DD')];
-        // const values = ['2024-08-09', '2024-08-12'];
-        const datas = await db.query(query, values);
+        // const query = 'select TANGGAL,NamaReseller,KodeProduk,Keterangan,STATUSTRANSAKSI FROM transaksi_his where TANGGAL between $1 and $2 order by TANGGAL asc';
+        const query = 'SELECT * FROM transaksi_his WHERE TANGGAL = ? AND namaterminal = ? AND NamaReseller != ? ORDER BY idtransaksi ASC';
+        // const values = [moment().subtract(1, 'days').format('YYYY-MM-DD'), moment().format('YYYY-MM-DD')];
+        // const values = ['2024-09-12', '2024-09-22'];
+        const values = [moment().subtract(1, 'days').format('YYYY-MM-DD'), 'FINNET', 'RTSBISA'];
+        const [rows, fields] = await db.query(query, values);
         // const jsonData = JSON.parse(datas.rows[0].response);
         // console.log(jsonData.resultCode)
         const insertedDatas = [];
-        for (let i = 0; i < datas.rows.length; i++) {
-            const data = datas.rows[i];
-            const jsonData = JSON.parse(data.response);
-            let information = jsonData != null ? jsonData.resultDesc.split('.')[0].replace(/\d+/g, '').replace('Maaf, ', '').trim() : 'No Respon From Finnet';
-            if (information === 'Approve') {
-                information = 'Success'
-            }
-            let resultCode = jsonData != null ? `resultCode:${jsonData.resultCode}` : 'NULL';
-            const status = !jsonData ? 'Failed' : jsonData.resultCode === '68' ? 'Suspect' : jsonData.resultCode !== '00' ? 'Failed' : 'Success';
+        for (let i = 0; i < rows.length; i++) {
+            const data = rows[i];
+            const rc = findStringBetween(data['Keterangan'], 'RESULTCODE:', ',RESULTDESC');
+            let keterangan = findStringBetween(data['Keterangan'], 'RESULTDESC:', ',PRODUCTCODE');
+
+            let information = keterangan != null ? keterangan.split('.')[0].replace(/\d+/g, '').replace('MAAF, ', '').trim() : 'No Respon From Finnet';
+            information = information.charAt(0).toUpperCase() + information.slice(1).toLowerCase();
+            information = information === 'Approve' ? 'Success' : information;
+            let resultCode = rc != null ? `resultCode:${rc}` : 'NULL';
+            const status = !rc ? 'Failed' : rc === '68' ? 'Suspect' : rc !== '00' ? 'Failed' : 'Success';
             const mappingProductCode = {
-                'TSELFLASH1': '500 Mb',
-                'TSELFLASH2': '1 Gb',
-                'TSELFLASH3': '2 Gb',
+                'TDF500': '500 Mb',
+                'TDF1': '1 Gb',
+                'TDF2': '2 Gb',
             }
-            const product = mappingProductCode[data.product_code] || 'Unknown';
+            const product = mappingProductCode[data['KodeProduk']] || 'Unknown';
             insertedDatas.push({
-                'Tanggal': moment(data.request_date).format('D-MMM-YY'),
+                'Tanggal': moment(data['TANGGAL']).format('D-MMM-YY'),
                 'Response': resultCode,
-                'Mitra': data.mitra_id,
+                'Mitra': data['NamaReseller'],
                 'Produk': product,
                 'Keterangan': information,
                 'Status': status,
             });
         }
         console.log('finished query');
-        client.end();
+        await db.end();
         return insertedDatas;
     } catch (err) {
         console.error('Error executing query:', err.stack);
+    }
+}
+
+function findStringBetween(str, startDelimiter, endDelimiter) {
+    // Create a regular expression to capture the string between the delimiters
+    const regex = new RegExp(`${startDelimiter}(.*?)${endDelimiter}`);
+
+    // Use the regex to find the match
+    const match = str.match(regex);
+
+    // If a match is found, return the captured group (substring between the delimiters)
+    if (match && match[1]) {
+        return match[1].trim();  // Trimming to remove any leading/trailing spaces
+    } else {
+        return null;  // Return null if no match is found
     }
 }
 
@@ -99,7 +118,7 @@ async function insertLastRow() {
     const datas = await getDataFromDatabase();
     if (datas.length === 0) {
         console.log("NO DATA FOUND")
-        process.exit(0);
+        return;
     }
     const values = datas.map(row => [
         row.Tanggal,
@@ -123,7 +142,7 @@ async function insertLastRow() {
 
         if (lastRow[0] === datas[0].Tanggal) {
             console.log("DATA ALREADY INSERTED")
-            process.exit(0);
+            return;
         }
 
         const newRange = `Data Finnet!A${rows.length + 1}`;
