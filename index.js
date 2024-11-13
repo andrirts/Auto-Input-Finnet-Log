@@ -66,8 +66,8 @@ async function getDataFromDatabase() {
         const insertedDatas = [];
         for (let i = 0; i < rows.length; i++) {
             const data = rows[i];
-            const rc = findStringBetween(data['Keterangan'], 'RESULTCODE:', ',RESULTDESC');
-            let keterangan = findStringBetween(data['Keterangan'], 'RESULTDESC:', ',PRODUCTCODE');
+            const rc = findStringBetween(data['keterangan'], 'RESULTCODE:', ',RESULTDESC');
+            let keterangan = findStringBetween(data['keterangan'], 'RESULTDESC:', ',PRODUCTCODE');
 
             let information = keterangan != null ? keterangan.split('.')[0].replace(/\d+/g, '').replace('MAAF, ', '').trim() : 'No Respon From Finnet';
             information = information.charAt(0).toUpperCase() + information.slice(1).toLowerCase();
