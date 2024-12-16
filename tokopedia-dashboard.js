@@ -4,7 +4,7 @@ const client = require('./db');
 const moment = require('moment');
 const cron = require('node-cron');
 const { authorize, addMoreRows } = require('./helper');
-const spreadsheetId = '1H2JMSwz2NDssK_zskKeDSbna3Vx4XpKHTxYAccYZq-8';
+const spreadsheetId = '1Ur_sU_Q4lQLRlDRURFMvenwdUz1JSMigiCVixcj-Nz8';
 
 
 async function getDataTokopediaFromDatabase() {
