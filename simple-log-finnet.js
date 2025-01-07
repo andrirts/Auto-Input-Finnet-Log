@@ -132,10 +132,17 @@ async function insertLastRow() {
     }
 }
 
-(async () => {
-    try {
-        const datas = await insertLastRow();
-    } catch (error) {
-        console.log(error);
-    }
-})()
+// (async () => {
+//     try {
+//         const datas = await insertLastRow();
+//     } catch (error) {
+//         console.log(error);
+//     }
+// })()
+
+cron.schedule("0 5 * * *", async () => {
+    console.log("RUNNING CRON JOB EVERY SECOND");
+    await insertLastRow();
+});
+
+console.log("FINISHED CRON JOB");
