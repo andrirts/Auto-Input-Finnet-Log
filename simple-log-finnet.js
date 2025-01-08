@@ -4,7 +4,7 @@ const client = require('./db');
 const moment = require('moment');
 const cron = require('node-cron');
 const { authorize, addMoreRows, findStringBetween } = require('./helper');
-const spreadsheetId = '13a17DT-X9GgSqFnJ68wimrVC5l6Z-C_iquQPbnzJwTs';
+const spreadsheetId = '11771gIToMxPtPq9jpKHGVR6UI_osg8E2B2gDzPKMNyw';
 const gid = 0;
 
 async function getDataFinnet() {
@@ -98,7 +98,7 @@ async function insertLastRow() {
         row['Total Price'],
     ])
     try {
-        const range = 'Sheet1!A:J';
+        const range = 'Data!A:J';
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
             range,
@@ -113,7 +113,7 @@ async function insertLastRow() {
             return;
         }
 
-        const newRange = `Sheet1!A${rows.length + 1}`;
+        const newRange = `Data!A${rows.length + 1}`;
         console.log('ADDING ROWS TO SPREADSHEET');
         await addMoreRows(spreadsheetId, gid);
         console.log("INSERTING DATA")
