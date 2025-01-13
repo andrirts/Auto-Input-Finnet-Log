@@ -13,8 +13,7 @@ async function getDataFinnet() {
         console.log('starting query');
         const query = 'SELECT * FROM transaksi_his WHERE TANGGAL = ? AND namaterminal = ? AND NamaReseller != ? ORDER BY idtransaksi ASC';
         // const values = [moment().subtract(1, 'days').format('YYYY-MM-DD'), moment().format('YYYY-MM-DD')];
-        // const values = ['2024-09-12', '2024-09-22'];
-        // const values = ['2025-01-06', 'FINNET', 'RTSBISA'];
+        // const values = ['2025-01-12', 'FINNET', 'RTSBISA'];
         const values = [moment().subtract(1, 'days').format('YYYY-MM-DD'), 'FINNET', 'RTSBISA'];
         const [rows, fields] = await db.query(query, values);
         // const jsonData = JSON.parse(datas.rows[0].response);
@@ -134,14 +133,14 @@ async function insertLastRow() {
 
 // (async () => {
 //     try {
-//         const datas = await insertLastRow();
+//         await insertLastRow();
 //     } catch (error) {
 //         console.log(error);
 //     }
 // })()
 
 cron.schedule("0 5 * * *", async () => {
-    console.log("RUNNING CRON JOB EVERY SECOND");
+    console.log(`Running at ${moment().format('YYYY-MM-DD HH:mm:ss')}`);
     await insertLastRow();
 });
 
