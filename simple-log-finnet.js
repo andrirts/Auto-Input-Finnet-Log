@@ -38,9 +38,10 @@ async function getDataFinnet() {
             let sourceOfAlerts = '';
             if (rc === '17') {
                 sourceOfAlerts = 'RTS'
-            } else if (rc === '00') {
+            } else if (rc === '00' || rc === '14') {
                 sourceOfAlerts = 'Partner'
-            } else {
+            }
+            {
                 sourceOfAlerts = 'Finnet'
             }
             const dateTransaction = moment(data['TANGGAL']).format('DD-MMM-YYYY')
