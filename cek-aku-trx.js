@@ -71,7 +71,7 @@ async function insertLastRow() {
         if (indexTransaction) {
             return Promise.all([
                 updateCell(spreadsheetId, sheetName, `E${indexTransaction}`, data.status),
-                updateCell(spreadsheetId, sheetName, `R${indexTransaction}`, data.payment_status)
+                updateCell(spreadsheetId, sheetName, `Q${indexTransaction}`, data.payment_status)
             ]);
         } else {
             let name, operator, productType, mappingPaymentMethod;
