@@ -3,3 +3,4 @@ package-lock.json
 credentials.json
 FinnetAutoInput.log
 tojson.js
+.env
