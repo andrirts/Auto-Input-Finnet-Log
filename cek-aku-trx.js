@@ -1,7 +1,7 @@
 const { Pool } = require('pg');
 const moment = require('moment');
 const { getRowIndexColumn, updateCell, insertRow, getCellValue } = require('./spreadsheet.service');
-const spreadsheetId = '1YrpsLnzqFdhQV54AcOxB16BNo42uwqfkPWcqKuIoE5o';
+const spreadsheetId = '1vLtiqotmrJZYqAh_OvBeiSLKojKqXalZ7wHTPG0XSqQ';
 const sheetName = 'WABA CekAku';
 const masterSheetName = 'Kode';
 require('dotenv').config();
@@ -101,7 +101,7 @@ async function insertLastRow() {
             const srmNumber = "62" + userNumber.slice(1);
             const validateTransactionExpired = transactionStatus === "" ? "" : transactionStatus === "SUKSES" ? "1" : 0;
             const validateIsPayment = paymentStatus === "SUCCESS" ? "1" : "";
-            const value = [name, id, productSku, sellPrice, status, paymentMethod, createdAt, productType, operator, transactionStatus, transactionDate, `'${transactionTime}`, rangeHour, hour, trxTsel512, '', '', paymentStatus, userNumber, srmNumber, '', '', '', '', '', mappingPaymentMethod, '', '', '', '', '', validateTransactionExpired, validateIsPayment, message];
+            const value = [name, id, productSku, sellPrice, status, paymentMethod, createdAt, productType, operator, transactionStatus, transactionDate, `'${transactionTime}`, rangeHour, hour, trxTsel512, '', paymentStatus, userNumber, srmNumber, '', '', '', '', '', mappingPaymentMethod, '', '', '', '', '', validateTransactionExpired, validateIsPayment, message];
             return insertRow(spreadsheetId, sheetName, value);
         }
     });
