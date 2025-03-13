@@ -23,12 +23,13 @@ async function getDataFromCekAku() {
         const res = await client.query(`SELECT 
             id,product_sku, sell_price, status, payment_method, created_at, payment_status, customer_email, message,transaction_date
             from transactions 
-            where created_at >= now() - INTERVAL '1 hour 30 minutes'
+            where created_at >= now() - INTERVAL '3 hour'
             and status != 0
             order by created_at asc;`);
         client.release(); // Always release the connection
         console.log('Client closed')
         // await pool.end();
+        console.log(res.rows)
         return res.rows;
     } catch (err) {
         console.error(err)
@@ -116,7 +117,9 @@ async function insertLastRow() {
 // })()
 
 async function executePeriodically() {
+    console.log('Executing ', moment().format('YYYY-MM-DD HH:mm:ss'));
     await insertLastRow();
+    console.log('Done ', moment().format('YYYY-MM-DD HH:mm:ss'));
     setTimeout(executePeriodically, 60000);
 }
 
