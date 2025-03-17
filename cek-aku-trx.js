@@ -117,10 +117,14 @@ async function insertLastRow() {
 // })()
 
 async function executePeriodically() {
-    console.log('Executing ', moment().format('YYYY-MM-DD HH:mm:ss'));
-    await insertLastRow();
-    console.log('Done ', moment().format('YYYY-MM-DD HH:mm:ss'));
-    setTimeout(executePeriodically, 60000);
+    try {
+        console.log('Executing ', moment().format('YYYY-MM-DD HH:mm:ss'));
+        await insertLastRow();
+        console.log('Done ', moment().format('YYYY-MM-DD HH:mm:ss'));
+        setTimeout(executePeriodically, 60000);
+    } catch (err) {
+        console.error(err, 'Error occurred at ', moment().format('YYYY-MM-DD HH:mm:ss'));
+    }
 }
 
 executePeriodically();
