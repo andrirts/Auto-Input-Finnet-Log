@@ -121,7 +121,7 @@ async function executePeriodically() {
         console.log('Executing ', moment().format('YYYY-MM-DD HH:mm:ss'));
         await insertLastRow();
         console.log('Done ', moment().format('YYYY-MM-DD HH:mm:ss'));
-        setTimeout(executePeriodically, 60000);
+        setTimeout(executePeriodically, 60000 * 15);
     } catch (err) {
         console.error(err, 'Error occurred at ', moment().format('YYYY-MM-DD HH:mm:ss'));
     }
