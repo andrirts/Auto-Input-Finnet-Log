@@ -36,9 +36,13 @@ async function getDataFinnet() {
             const product = mappingProductCode[data['KodeProduk']] || 'Unknown';
             const sellPrice = data['HARGAJUAL'] ? data['HARGAJUAL'] : 0;
             let sourceOfAlerts = '';
+            let countResponse14 = 0;
             if (rc === '17') {
                 sourceOfAlerts = 'RTS'
             } else if (rc === '00' || rc === '14') {
+                if (rc === '14') {
+                    countResponse14 = 1;
+                }
                 sourceOfAlerts = 'Partner'
             } else {
                 sourceOfAlerts = 'Finnet'
@@ -54,6 +58,7 @@ async function getDataFinnet() {
             if (findIfExists !== -1) {
                 insertedDatas[findIfExists]['Total Price'] += sellPrice;
                 insertedDatas[findIfExists]['Count Response'] += 1;
+                insertedDatas[findIfExists]['Response 14'] += rc === '14' ? countResponse14 : 0;
                 continue;
             }
             insertedDatas.push({
@@ -67,6 +72,7 @@ async function getDataFinnet() {
                 'Source of Alerts': sourceOfAlerts,
                 'Count Response': 1,
                 'Total Price': sellPrice,
+                'Response 14': rc === '14' ? countResponse14 : 0,
             });
         }
         console.log('finished query');
@@ -95,6 +101,7 @@ async function insertLastRow() {
         row['Source of Alerts'],
         row['Count Response'],
         row['Total Price'],
+        row['Response 14'],
     ])
     try {
         const range = 'Data!A:J';
