@@ -64,46 +64,52 @@ async function insertLastRow() {
     }
     const startTime = moment();
     const promises = datas.map(async (data) => {
-        const [indexTransaction, findCode, findPaymentMethod] = await Promise.all([
-            await getRowIndexColumn(spreadsheetId, sheetName, 'B', data.id),
-            await getRowIndexColumn(spreadsheetId, masterSheetName, 'D', data.product_sku),
-            await getRowIndexColumn(spreadsheetId, masterSheetName, 'I', data.payment_method)
-        ]);
-        if (indexTransaction) {
-            return Promise.all([
-                updateCell(spreadsheetId, sheetName, `E${indexTransaction}`, data.status),
-                updateCell(spreadsheetId, sheetName, `Q${indexTransaction}`, data.payment_status)
+        try {
+            const [indexTransaction, findCode, findPaymentMethod] = await Promise.all([
+                await getRowIndexColumn(spreadsheetId, sheetName, 'B', data.id),
+                await getRowIndexColumn(spreadsheetId, masterSheetName, 'D', data.product_sku),
+                await getRowIndexColumn(spreadsheetId, masterSheetName, 'I', data.payment_method)
             ]);
-        } else {
-            let name, operator, productType, mappingPaymentMethod;
-            if (findCode || findPaymentMethod) {
-                [name, operator, productType, mappingPaymentMethod] = await Promise.all([
-                    await getCellValue(spreadsheetId, masterSheetName, `C${findCode}`),
-                    await getCellValue(spreadsheetId, masterSheetName, `B${findCode}`),
-                    await getCellValue(spreadsheetId, masterSheetName, `A${findCode}`),
-                    await getCellValue(spreadsheetId, masterSheetName, `J${findPaymentMethod}`),
+            if (indexTransaction) {
+                return Promise.all([
+                    updateCell(spreadsheetId, sheetName, `E${indexTransaction}`, data.status),
+                    updateCell(spreadsheetId, sheetName, `Q${indexTransaction}`, data.payment_status)
                 ]);
+            } else {
+                let name, operator, productType, mappingPaymentMethod;
+                if (findCode || findPaymentMethod) {
+                    [name, operator, productType, mappingPaymentMethod] = await Promise.all([
+                        await getCellValue(spreadsheetId, masterSheetName, `C${findCode}`),
+                        await getCellValue(spreadsheetId, masterSheetName, `B${findCode}`),
+                        await getCellValue(spreadsheetId, masterSheetName, `A${findCode}`),
+                        await getCellValue(spreadsheetId, masterSheetName, `J${findPaymentMethod}`),
+                    ]);
+                }
+                const id = data.id;
+                const productSku = data.product_sku;
+                const sellPrice = data.sell_price;
+                const status = data.status;
+                const paymentMethod = data.payment_method;
+                const paymentStatus = data.payment_status;
+                const userNumber = data.customer_email;
+                const message = data.message;
+                const createdAt = moment(data.created_at).format("YYYY-MM-DDTHH:mm:ss.SSSSSSZ");
+                const transactionStatus = paymentStatus === 'FAILED' ? "" : (paymentStatus === 'SUCCESS' && status === 2) ? "SUKSES" : "GAGAL";
+                const transactionDate = moment(data.transaction_date).format("YYYY-MM-DD");
+                const transactionTime = moment(data.created_at).format("HH:mm:ss");
+                const hour = moment(data.created_at).format("HH");
+                const rangeHour = await getRangeHour(hour);
+                const trxTsel512 = productType === "Paket Data 512" ? 1 : "";
+                const srmNumber = "62" + userNumber.slice(1);
+                const validateTransactionExpired = transactionStatus === "" ? "" : transactionStatus === "SUKSES" ? "1" : 0;
+                const validateIsPayment = paymentStatus === "SUCCESS" ? "1" : "";
+                const value = [name, id, productSku, sellPrice, status, paymentMethod, createdAt, productType, operator, transactionStatus, transactionDate, `'${transactionTime}`, rangeHour, hour, trxTsel512, '', paymentStatus, userNumber, srmNumber, '', '', '', '', '', mappingPaymentMethod, '', '', '', '', '', validateTransactionExpired, validateIsPayment, message];
+                return insertRow(spreadsheetId, sheetName, value);
             }
-            const id = data.id;
-            const productSku = data.product_sku;
-            const sellPrice = data.sell_price;
-            const status = data.status;
-            const paymentMethod = data.payment_method;
-            const paymentStatus = data.payment_status;
-            const userNumber = data.customer_email;
-            const message = data.message;
-            const createdAt = moment(data.created_at).format("YYYY-MM-DDTHH:mm:ss.SSSSSSZ");
-            const transactionStatus = paymentStatus === 'FAILED' ? "" : (paymentStatus === 'SUCCESS' && status === 2) ? "SUKSES" : "GAGAL";
-            const transactionDate = moment(data.transaction_date).format("YYYY-MM-DD");
-            const transactionTime = moment(data.created_at).format("HH:mm:ss");
-            const hour = moment(data.created_at).format("HH");
-            const rangeHour = await getRangeHour(hour);
-            const trxTsel512 = productType === "Paket Data 512" ? 1 : "";
-            const srmNumber = "62" + userNumber.slice(1);
-            const validateTransactionExpired = transactionStatus === "" ? "" : transactionStatus === "SUKSES" ? "1" : 0;
-            const validateIsPayment = paymentStatus === "SUCCESS" ? "1" : "";
-            const value = [name, id, productSku, sellPrice, status, paymentMethod, createdAt, productType, operator, transactionStatus, transactionDate, `'${transactionTime}`, rangeHour, hour, trxTsel512, '', paymentStatus, userNumber, srmNumber, '', '', '', '', '', mappingPaymentMethod, '', '', '', '', '', validateTransactionExpired, validateIsPayment, message];
-            return insertRow(spreadsheetId, sheetName, value);
+        }
+        catch (err) {
+            console.error(`Error processing transaction ${data.id}:`, err.message, moment().format('YYYY-MM-DD HH:mm:ss'));
+            return null;
         }
     });
     await Promise.all(promises);
